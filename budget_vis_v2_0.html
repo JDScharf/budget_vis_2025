@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syracuse Budget Cuts Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        h1, h2, h3 {
+            color: #2C3E50;
+            margin-top: 30px;
+        }
+        
+        h1 {
+            border-bottom: 2px solid #3498DB;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        
+        .chart-container {
+            margin: 40px 0;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .explanation {
+            background-color: #EBF5FB;
+            border-left: 4px solid #3498DB;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 5px;
+            pointer-events: none;
+            font-size: 14px;
+            max-width: 250px;
+            z-index: 10;
+        }
+        
+        svg {
+            overflow: visible;
+        }
+        
+        .axis text {
+            font-size: 12px;
+        }
+        
+        @media (max-width: 600px) {
+            .axis text {
+                font-size: 10px;
+            }
+        }
+        
+        .legend {
+            font-size: 12px;
+        }
+        
+        .intro {
+            border-radius: 5px;
+            background-color: #2C3E50;
+            color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #2C3E50;
+        }
+        
+        .chart-subtitle {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #7F8C8D;
+        }
+        
+        button {
+            background-color: #3498DB;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #2980B9;
+        }
+        
+        .highlight {
+            color: #E74C3C;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #7F8C8D;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div class="intro">
+            <h1>Syracuse Budget Cuts 2025: Impact Analysis</h1>
+            <p>This visualization explores the proposed budget amendments for Syracuse in 2025, highlighting departments facing significant cuts and their potential impact on city services.</p>
+        </div>
+        
+        <!-- Chart 1: Percent Cut by Department -->
+        <div class="chart-container">
+            <div class="chart-title">Percentage of Budget Cuts by Department</div>
+            <div class="chart-subtitle">Departments ordered by percentage of cuts (highest to lowest)</div>
+            <div id="percent-cut-chart"></div>
+        </div>
+        
+        <div class="explanation">
+            <h3>Understanding the Budget Cut Percentages</h3>
+            <p>This chart shows the percentage of budget cuts for each department. The Department of Assessment is facing the largest percentage cut at over 52%, followed by the Office of Gun Violence Prevention at nearly 38%. These drastic reductions could severely impair these departments' abilities to fulfill their missions, particularly in areas that directly affect public safety and property valuations.</p>
+        </div>
+        
+        <!-- Chart 2: Absolute Cut Values -->
+        <div class="chart-container">
+            <div class="chart-title">Dollar Amount of Budget Cuts by Department</div>
+            <div class="chart-subtitle">Showing the actual monetary impact of cuts</div>
+            <div id="absolute-cut-chart"></div>
+        </div>
+        
+        <div class="explanation">
+            <h3>The Real Dollar Impact</h3>
+            <p>While percentage cuts tell one story, the actual dollar amounts reveal another dimension. The Department of Assessment and Law Department are losing the most funding in absolute terms, with cuts of $1,000,000 and $869,067 respectively. These substantial reductions will likely result in reduced staffing, fewer services, and potential delays in critical city functions.</p>
+        </div>
+        
+        <!-- Chart 3: Before vs After Budget -->
+        <div class="chart-container">
+            <div class="chart-title">Proposed vs. Amended Budget Comparison</div>
+            <div class="chart-subtitle">Compare original proposed budgets with post-amendment figures</div>
+            <div id="before-after-chart"></div>
+            <div style="text-align: center; margin-top: 10px;">
+                <button id="sort-budget-btn">Sort by Budget Size</button>
+                <button id="sort-cut-btn">Sort by Cut Percentage</button>
+            </div>
+        </div>
+        
+        <div class="explanation">
+            <h3>Before vs. After: The Amended Budget Impact</h3>
+            <p>This comparison highlights the stark differences between originally proposed budgets and the amended figures after cuts. The ability to sort by either budget size or cut percentage reveals patterns in how cuts were distributed. Notice how some smaller departments are taking proportionally larger hits, while some larger departments see significant dollar cuts that represent smaller percentages of their overall budgets.</p>
+        </div>
+        
+        <!-- Chart 4: Cut Types Analysis -->
+        <div class="chart-container">
+            <div class="chart-title">Types of Budget Cuts by Category</div>
+            <div class="chart-subtitle">Analyzing where cuts are being made within departments</div>
+            <div id="cut-types-chart"></div>
+        </div>
+        
+        <div class="explanation">
+            <h3>Where Are The Cuts Coming From?</h3>
+            <p>This analysis reveals concerning patterns in the types of cuts being implemented. Professional Services accounts for the largest portion of cuts, which could indicate reduced expert consultations and specialized assistance. Significant cuts to salaries suggest potential layoffs or unfilled positions, directly impacting service delivery. These patterns show how budget decisions may affect the quality and availability of city services.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Data source: Syracuse Budget Amendments 2025</p>
+            <p>Created with D3.js | Last updated: May 2025</p>
+        </div>
+    </div>
+
+    <script>
+        // Parse the CSV data
+        const rawData = `Department,Proposed_Budget,Account_Amend_1,Amt_Changed_1,Account_Ammend_2,Amt_Changed_2,Account_Ammend_3,Amt_Changed_3,,,Amended_Budget,Percent_Cut
+Common Council,"$801,988","10100 "Professional Services"" Account — 541500","-$56,140",,$0,,,,,"$745,848",-7.00%
+Citizen Review Board,"$414,844","10500 ""Professional Services"" Account — 541500","-$29,040",,$0,,,,,"$385,804",-7.00%
+Office of the Mayor,"$1,055,244","12100 ""Contracted Services-Related Parties"" Account — 541700","-$73,866",,$0,,,,,"$981,378",-7.00%
+Office of Gun Violence Prevention,"$395,540","12150 ""Professional Services"" Account — 541500","-$150,000",,$0,,,,,"$245,540",-37.92%
+Office of Comunications,"$394,200","12120 ""Consumable Supplies & Materials"" Account — 540541","-$2,000","12120 "Technical Devices & Tools"" Account — 540542","-$6,200","12120 "Other Services"" Account — 540552","-$19,394",,,"$366,606",-7.00%
+"Office of Accountability, Performance & Innovation (API)","$4,281,745","12140 ""Factual & Informational" Account — 540530","-$649,723",,$0,,$0,,,"$3,632,022",-15.17%
+Office of Management & Budget,"$523,182","13400 ""Salaries"" Account — 510100","-$25,923",,$0,,$0,,,"$497,259",-4.95%
+Division of Purchase,"$130,278","13450 ""Office Supplies"" Account — 540320",-$500,"13450 ""Travel"" Account — 541610",-$500,"13450 ""Training"" Account — 541620",-$700,,,"$128,578",-1.30%
+Division of Equity Compliance & Social Impact,"$200,852","64500 ""Office Supplies"" Account — 540320","-$1,000","64500 ""Travel"" Account — 541610","-$3,000","64500 ""Training"" Account — 541620","-$4,000","64500 ""Professional Development"" Account — 541630","-$1,000","$191,852",-4.48%
+Office of Personnel & Labor Relations,"$1,398,236","14300 ""Salaries"" Account — 510100","-$97,877",,$0,,$0,,$0,"$1,300,359",-7.00%
+Bureau of Research,"$346,516","14800 ""Travel"" Account — 541610","-$4,185",,$0,,$0,,$0,"$342,331",-1.21%
+Bureau of Information Technology,"$2,430,163","16800 ""Salaries"" Account — 510100","-$170,112","16800 ""Other Services"" Account — 540552","-$250,000","16800 ""Professional Services"" Account — 541500","-$250,000",,$0,"$1,760,051",-27.57%
+Bureau of Accounts,"$902,714","13110 ""Salaries"" Account — 510100","-$63,190",,$0,,$0,,$0,"$839,524",-7.00%
+Parking Violatons Bureau,"$1,066,447","13310 ""Salaries"" Account — 510100","-$74,652",,$0,,$0,,$0,"$991,795",-7.00%
+Office of the City Auditor,"$348,866","13200 ""Professional Services"" Account — 541500","-$24,421",,$0,,$0,,$0,"$324,445",-7.00%
+City Clerk's Office,"$408,472","14100 Professional Services Account — 541500","-$15,000",,$0,,$0,,$0,"$393,472",-3.67%
+Department of Assessment,"$1,918,192","13550 ""Professional Services"" Account — 541500","-$1,000,000",,$0,,0,,$0,"$918,192",-52.13%
+Board of Assessment Review,"$20,200","13560 ""Salaries"" Account — 510100","-$1,414",,$0,,0,,$0,"$18,786",-7.00%
+Board of Zoning Appeal,"$9,500","80100 "Temporary Services-P/T"" Account — 510300",-$655,,0,,0,,0,"$8,845",-6.89%
+Law Department,"$5,272,377","14200 ""Professional Services"" Account — 541500","-$869,067",,0,,0,,0,"$4,403,310",-16.48%
+Bureau of Administrative Adjudication,"$966,533","13320 "Temporary Services-P/T"" Account — 510300","-$67,658",,0,,0,,0,"$898,875",-7.00%
+Neighborhood & Business Development,"$1,389,055","64200 ""Contracted Services-Related Parties"" Account — 541700","-$97,234",,0,,0,,0,"$1,291,821",-7.00%
+Division of Code Enforcement,"$6,385,952","36210 ""Professional Services"" Account — 541500","-$250,000","36210 ""Contracted Services-Related Parties"" Account — 541700","-$210,000","36210 Salaries Account — 510100","-$120,000",,0,"$5,805,952",-9.08%
+Division of Planning & Sustainability,"$417,998","64210 ""Professional Services"" Account — 541500","-$29,260",,0,,0,,0,"$388,738",-7.00%
+Department of Engineering,"$1,575,842","80400 ""Salaries"" Account — 510100","-$110,309",,0,,0,,0,"$1,465,533",-7.00%
+DPW Environmental Services,"$1,319,805","14910 "Overtine Wages"" Account — 510400","-$43,537","14910 ""Temporary Services-P/T"" Account — 510300","-$49,000",,0,,0,"$1,227,268",-7.01%
+DPW Building Services,"$4,357,453","16210 Wages- F/T Weekly Account — 510200","-$305,022","16210 Wages- F/T Weekly Account — 510200","-$305,022",,0,,0,"$3,747,409",-14.00%
+DPW Street Repair,"$1,412,569","51200 ""Salaries"" Account — 510100","-$98,880",,0,,0,,0,"$1,313,689",-7.00%`;
+
+        // Helper functions for data parsing
+        function cleanNumber(str) {
+            if (!str) return 0;
+            if (typeof str === 'number') return str;
+            return parseFloat(str.replace(/[$,\s%]/g, ''));
+        }
+
+        // Parse the CSV data
+        const parsedData = [];
+        rawData.split('\n').forEach((row, index) => {
+            if (index === 0) return; // Skip header
+            
+            const cells = [];
+            let currentCell = '';
+            let insideQuotes = false;
+            
+            // Parse CSV considering quoted commas
+            for (let i = 0; i < row.length; i++) {
+                if (row[i] === '"') {
+                    insideQuotes = !insideQuotes;
+                } else if (row[i] === ',' && !insideQuotes) {
+                    cells.push(currentCell.trim());
+                    currentCell = '';
+                } else {
+                    currentCell += row[i];
+                }
+            }
+            cells.push(currentCell.trim());
+            
+            // Fix any missing values and calculate if needed
+            const proposedBudget = cleanNumber(cells[1]);
+            const amendedBudget = cleanNumber(cells[10]);
+            let percentCut = cells[11] ? cleanNumber(cells[11]) : ((amendedBudget - proposedBudget) / proposedBudget * 100);
+            
+            // Some entries have #VALUE! for percent cut, recalculate those
+            if (isNaN(percentCut)) {
+                percentCut = ((amendedBudget - proposedBudget) / proposedBudget * 100);
+            }
+            
+            const item = {
+                department: cells[0].replace(/"/g, ''),
+                proposedBudget: proposedBudget,
+                amendedBudget: amendedBudget,
+                absoluteCut: proposedBudget - amendedBudget,
+                percentCut: percentCut,
+                account1: cells[2],
+                amtChanged1: cleanNumber(cells[3]),
+                account2: cells[4],
+                amtChanged2: cleanNumber(cells[5]),
+                account3: cells[6],
+                amtChanged3: cleanNumber(cells[7])
+            };
+            
+            parsedData.push(item);
+        });
+
+        // Create tooltip
+        const tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        // Create a color scale for departments
+        const colorScale = d3.scaleOrdinal()
+            .domain(parsedData.map(d => d.department))
+            .range(d3.schemeCategory10);
+
+        // Chart 1: Percent Cut by Department
+        function createPercentCutChart() {
+            const sortedData = [...parsedData].sort((a, b) => b.percentCut - a.percentCut);
+            
+            const margin = {top: 30, right: 20, bottom: 120, left: 60};
+            const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+            
+            const svg = d3.select("#percent-cut-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // Create scales
+            const x = d3.scaleBand()
+                .domain(sortedData.map(d => d.department))
+                .range([0, width])
+                .padding(0.2);
+            
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(sortedData, d => Math.abs(d.percentCut)) * 1.1])
+                .range([height, 0]);
+            
+            // Create axes
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em");
+            
+            svg.append("g")
+                .call(d3.axisLeft(y).tickFormat(d => `${d}%`));
+            
+            // Create bars
+            const bars = svg.selectAll(".bar")
+                .data(sortedData)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.department))
+                .attr("width", x.bandwidth())
+                .attr("y", height)
+                .attr("height", 0)
+                .attr("fill", (d, i) => {
+                    // Color gradient based on severity of cuts
+                    if (d.percentCut > 30) return "#c0392b";
+                    if (d.percentCut > 15) return "#e74c3c";
+                    if (d.percentCut > 10) return "#f39c12";
+                    if (d.percentCut > 5) return "#f1c40f";
+                    return "#27ae60";
+                });
+            
+            // Animation
+            bars.transition()
+                .duration(1000)
+                .delay((d, i) => i * 50)
+                .attr("y", d => y(Math.abs(d.percentCut)))
+                .attr("height", d => height - y(Math.abs(d.percentCut)));
+            
+            // Add labels
+            svg.selectAll(".label")
+                .data(sortedData)
+                .enter()
+                .append("text")
+                .attr("class", "label")
+                .attr("x", d => x(d.department) + x.bandwidth() / 2)
+                .attr("y", d => y(Math.abs(d.percentCut)) - 5)
+                .attr("text-anchor", "middle")
+                .style("font-size", "11px")
+                .style("opacity", 0)
+                .text(d => `${Math.abs(d.percentCut).toFixed(1)}%`)
+                .transition()
+                .duration(1000)
+                .delay((d, i) => 1000 + i * 50)
+                .style("opacity", 1);
+            
+            // Add tooltip functionality
+            bars.on("mouseover", function(event, d) {
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("opacity", 0.8);
+                
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                
+                tooltip.html(`
+                    <strong>${d.department}</strong><br>
+                    Proposed Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
+                    Amended Budget: $${d3.format(",")(Math.round(d.amendedBudget))}<br>
+                    Cut: ${Math.abs(d.percentCut).toFixed(2)}% ($${d3.format(",")(Math.round(d.absoluteCut))})
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).transition()
+                    .duration(500)
+                    .attr("opacity", 1);
+                
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+            
+            // Add title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .text("Budget Cut Percentages by Department");
+            
+            // Add y-axis label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left + 15)
+                .attr("x", -height / 2)
+                .attr("text-anchor", "middle")
+                .text("Percentage Cut");
+        }
+        
+        // Chart 2: Absolute Cut Values
+        function createAbsoluteCutChart() {
+            const sortedData = [...parsedData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
+            
+            const margin = {top: 30, right: 20, bottom: 120, left: 80};
+            const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+            
+            const svg = d3.select("#absolute-cut-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // Create scales
+            const x = d3.scaleBand()
+                .domain(sortedData.map(d => d.department))
+                .range([0, width])
+                .padding(0.2);
+            
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(sortedData, d => d.absoluteCut) * 1.1])
+                .range([height, 0]);
+            
+            // Create axes
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x))
+                .selectAll("text")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em");
+            
+            svg.append("g")
+                .call(d3.axisLeft(y).tickFormat(d => `$${d3.format(",")(d)}`));
+            
+            // Create bars with gradient fill
+            const bars = svg.selectAll(".bar")
+                .data(sortedData)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.department))
+                .attr("width", x.bandwidth())
+                .attr("y", height)
+                .attr("height", 0)
+                .attr("fill", (d, i) => {
+                    // Color indicating severity in absolute dollars
+                    if (d.absoluteCut > 500000) return "#c0392b";
+                    if (d.absoluteCut > 250000) return "#e74c3c";
+                    if (d.absoluteCut > 100000) return "#f39c12";
+                    if (d.absoluteCut > 50000) return "#f1c40f";
+                    return "#27ae60";
+                });
+            
+            // Animation
+            bars.transition()
+                .duration(1000)
+                .delay((d, i) => i * 50)
+                .attr("y", d => y(d.absoluteCut))
+                .attr("height", d => height - y(d.absoluteCut));
+            
+            // Add labels
+            svg.selectAll(".label")
+                .data(sortedData)
+                .enter()
+                .append("text")
+                .attr("class", "label")
+                .attr("x", d => x(d.department) + x.bandwidth() / 2)
+                .attr("y", d => y(d.absoluteCut) - 5)
+                .attr("text-anchor", "middle")
+                .style("font-size", "11px")
+                .style("opacity", 0)
+                .text(d => `$${d3.format(".2s")(d.absoluteCut)}`)
+                .transition()
+                .duration(1000)
+                .delay((d, i) => 1000 + i * 50)
+                .style("opacity", 1);
+            
+            // Add tooltip functionality
+            bars.on("mouseover", function(event, d) {
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("opacity", 0.8);
+                
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                
+                tooltip.html(`
+                    <strong>${d.department}</strong><br>
+                    Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
+                    Percentage: ${Math.abs(d.percentCut).toFixed(2)}%<br>
+                    Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).transition()
+                    .duration(500)
+                    .attr("opacity", 1);
+                
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+            
+            // Add title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .text("Top 15 Departments by Dollar Amount of Cuts");
+            
+            // Add y-axis label
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", -margin.left + 15)
+                .attr("x", -height / 2)
+                .attr("text-anchor", "middle")
+                .text("Dollar Amount Cut");
+        }
+        
+        // Chart 3: Before vs After Budget
+        function createBeforeAfterChart() {
+            let sortedData = [...parsedData].sort((a, b) => b.proposedBudget - a.proposedBudget);
+            
+            const margin = {top: 30, right: 120, bottom: 120, left: 80};
+            const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+            
+            const svg = d3.select("#before-after-chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // Create scales
+            const y = d3.scaleBand()
+                .domain(sortedData.map(d => d.department))
+                .range([0, height])
+                .padding(0.2);
+            
+            const x = d3.scaleLinear()
+                .domain([0, d3.max(sortedData, d => d.proposedBudget) * 1.1])
+                .range([0, width]);
+            
+            // Create axes
+            svg.append("g")
+                .call(d3.axisLeft(y));
+            
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).tickFormat(d => `$${d3.format(".2s")(d)}`));
+            
+            // Create grouped bars for before/after
+            const beforeBars = svg.selectAll(".before-bar")
+                .data(sortedData)
+                .enter()
+                .append("rect")
+                .attr("class", "before-bar")
+                .attr("y", d => y(d.department))
+                .attr("height", y.bandwidth())
+                .attr("x", 0)
+                .attr("width", 0)
+                .attr("fill", "#3498db")
+                .attr("opacity", 0.8);
+            
+            const afterBars = svg.selectAll(".after-bar")
+                .data(sortedData)
+                .enter()
+                .append("rect")
+                .attr("class", "after-bar")
+                .attr("y", d => y(d.department) + y.bandwidth() / 4)
+                .attr("height", y.bandwidth() / 2)
+                .attr("x", 0)
+                .attr("width", 0)
+                .attr("fill", "#e74c3c");
+            
+            // Animation
+            beforeBars.transition()
+                .duration(1000)
+                .delay((d, i) => i * 30)
+                .attr("width", d => x(d.proposedBudget));
+            
+            afterBars.transition()
+                .duration(1000)
+                .delay((d, i) => i * 30 + 500)
+                .attr("width", d => x(d.amendedBudget));
+            
+            // Add legend
+            const legend = svg.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${width + 10}, 0)`);
+            
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", 18)
+                .attr("height", 18)
+                .attr("fill", "#3498db");
+            
+            legend.append("text")
+                .attr("x", 24)
+                .attr("y", 9)
+                .attr("dy", ".35em")
+                .text("Proposed Budget");
+            
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", 24)
+                .attr("width", 18)
+                .attr("height", 18)
+                .attr("fill", "#e74c3c");
+            
+            legend.append("text")
+                .attr("x", 24)
+                .attr("y", 33)
+                .attr("dy", ".35em")
+                .text("Amended Budget");
+            
+            // Add tooltip functionality
+            beforeBars.on("mouseover", function(event, d) {
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("opacity", 1);
+                
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                
+                tooltip.html(`
+                    <strong>${d.department}</strong><br>
+                    Proposed Budget: ${d3.format(",")(Math.round(d.proposedBudget))}<br>
+                    Cut Amount: ${d3.format(",")(Math.round(d.absoluteCut))}<br>
+                    Cut Percentage: ${Math.abs(d.percentCut).toFixed(2)}%
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).transition()
+                    .duration(500)
+                    .attr("opacity", 0.8);
+                
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+            
+            afterBars.on("mouseover", function(event, d) {
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("opacity", 0.8);
+                
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                
+                tooltip.html(`
+                    <strong>${d.department}</strong><br>
+                    Amended Budget: ${d3.format(",")(Math.round(d.amendedBudget))}<br>
+                    Cut Amount: ${d3.format(",")(Math.round(d.absoluteCut))}<br>
+                    Cut Percentage: ${Math.abs(d.percentCut).toFixed(2)}%
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).transition()
+                    .duration(500)
+                    .attr("opacity", 1);
+                
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+            
+            // Add title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", -10)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .text("Proposed vs. Amended Budget by Department");
+            
+            // Add x-axis label
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height + 40)
+                .attr("text-anchor", "middle")
+                .text("Budget Amount ($)");
+            
+            // Add sorting functionality
+            d3.select("#sort-budget-btn").on("click", function() {
+                sortedData = [...parsedData].sort((a, b) => b.proposedBudget - a.proposedBudget);
+                updateChart();
+            });
+            
+            d3.select("#sort-cut-btn").on("click", function() {
+                sortedData = [...parsedData].sort((a, b) => b.percentCut - a.percentCut);
+                updateChart();
+            });
+            
+            function updateChart() {
+                // Update y domain
+                y.domain(sortedData.map(d => d.department));
+                
+                // Update y-axis with transition
+                svg.select(".y-axis")
+                    .transition()
+                    .duration(750)
+                    .call(d3.axisLeft(y));
+                
+                // Update bars
+                beforeBars.data(sortedData)
+                    .transition()
+                    .duration(750)
+                    .attr("y", d => y(d.department))
+                    .attr("width", d => x(d.proposedBudget));
+                
+                afterBars.data(sortedData)
+                    .transition()
+                    .duration(750)
+                    .attr("y", d => y(d.department) + y.bandwidth() / 4)
+                    .attr("width", d => x(d.amendedBudget));
+            }
+            
+            // Create y-axis with class for updates
+            svg.append("g")
+                .attr("class", "y-axis")
+                .call(d3.axisLeft(y));
+        }
+        
+        // Chart 4: Cut Types Analysis
+        function createCutTypesChart() {
+            // Analyze cuts by category
+            const categoryMap = new Map();
+            
+            // Process all account amendments to categorize cuts
+            parsedData.forEach(dept => {
+                // Process account 1
+                if (dept.account1) {
+                    const accountType = extractAccountType(dept.account1);
+                    if (categoryMap.has(accountType)) {
+                        categoryMap.set(accountType, categoryMap.get(accountType) + Math.abs(dept.amtChanged1));
+                    } else {
+                        categoryMap.set(accountType, Math.abs(dept.amtChanged1));
+                    }
+                }
+                
+                // Process account 2
+                if (dept.account2 && dept.amtChanged2 !== 0) {
+                    const accountType = extractAccountType(dept.account2);
+                    if (categoryMap.has(accountType)) {
+                        categoryMap.set(accountType, categoryMap.get(accountType) + Math.abs(dept.amtChanged2));
+                    } else {
+                        categoryMap.set(accountType, Math.abs(dept.amtChanged2));
+                    }
+                }
+                
+                // Process account 3
+                if (dept.account3 && dept.amtChanged3 !== 0) {
+                    const accountType = extractAccountType(dept.account3);
+                    if (categoryMap.has(accountType)) {
+                        categoryMap.set(accountType, categoryMap.get(accountType) + Math.abs(dept.amtChanged3));
+                    } else {
+                        categoryMap.set(accountType, Math.abs(dept.amtChanged3));
+                    }
+                }
+            });
+            
+            // Convert map to array for D3
+            const cutTypeData = Array.from(categoryMap, ([key, value]) => ({ 
+                category: key, 
+                amount: value 
+            })).sort((a, b) => b.amount - a.amount);
+            
+            // Define dimensions for pie chart
+            const width = Math.min(500, window.innerWidth - 40);
+            const height = 400;
+            const radius = Math.min(width, height) / 2;
+            
+            // Create SVG
+            const svg = d3.select("#cut-types-chart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width / 2},${height / 2})`);
+            
+            // Create color scale
+            const color = d3.scaleOrdinal()
+                .domain(cutTypeData.map(d => d.category))
+                .range(["#2c3e50", "#3498db", "#9b59b6", "#e74c3c", "#f1c40f", "#16a085", "#2ecc71", "#e67e22", "#1abc9c", "#95a5a6"]);
+            
+            // Create pie chart
+            const pie = d3.pie()
+                .value(d => d.amount)
+                .sort(null);
+            
+            const data_ready = pie(cutTypeData);
+            
+            // Create arc generator
+            const arc = d3.arc()
+                .innerRadius(radius * 0.4)
+                .outerRadius(radius * 0.8);
+            
+            const outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9);
+            
+            // Build the pie chart with animation
+            const slices = svg.selectAll('path')
+                .data(data_ready)
+                .enter()
+                .append('path')
+                .attr('d', arc)
+                .attr('fill', d => color(d.data.category))
+                .attr("stroke", "white")
+                .style("stroke-width", "2px")
+                .style("opacity", 0.7)
+                .on("mouseover", function(event, d) {
+                    d3.select(this)
+                        .style("opacity", 1);
+                    
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    
+                    const percentage = (d.data.amount / d3.sum(cutTypeData, d => d.amount) * 100).toFixed(1);
+                    
+                    tooltip.html(`
+                        <strong>${d.data.category}</strong><br>
+                        Amount: ${d3.format(",")(Math.round(d.data.amount))}<br>
+                        Percentage: ${percentage}% of total cuts
+                    `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function() {
+                    d3.select(this)
+                        .style("opacity", 0.7);
+                    
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+            
+            // Animation
+            slices
+                .transition()
+                .duration(1000)
+                .attrTween('d', function(d) {
+                    const i = d3.interpolate({startAngle: 0, endAngle: 0}, d);
+                    return function(t) { return arc(i(t)); };
+                });
+            
+            // Add polylines for labels
+            const polylines = svg.selectAll('polyline')
+                .data(data_ready)
+                .enter()
+                .append('polyline')
+                .style("fill", "none")
+                .style("stroke", "black")
+                .style("opacity", 0.3)
+                .style("stroke-width", "1px")
+                .attr('points', function(d) {
+                    const pos = outerArc.centroid(d);
+                    pos[0] = radius * 0.95 * (midAngle(d) < Math.PI ? 1 : -1);
+                    return [arc.centroid(d), outerArc.centroid(d), pos];
+                });
+            
+            // Add labels with animation
+            const labels = svg.selectAll('text')
+                .data(data_ready)
+                .enter()
+                .append('text')
+                .style("opacity", 0)
+                .text(d => {
+                    const percentage = (d.data.amount / d3.sum(cutTypeData, d => d.amount) * 100).toFixed(1);
+                    return `${d.data.category} (${percentage}%)`;
+                })
+                .attr('transform', function(d) {
+                    const pos = outerArc.centroid(d);
+                    pos[0] = radius * 0.99 * (midAngle(d) < Math.PI ? 1 : -1);
+                    return `translate(${pos})`;
+                })
+                .style('text-anchor', function(d) {
+                    return midAngle(d) < Math.PI ? 'start' : 'end';
+                })
+                .style("font-size", "12px");
+            
+            labels.transition()
+                .delay(1000)
+                .duration(500)
+                .style("opacity", function(d) {
+                    // Only show labels for larger slices to avoid overlap
+                    const percentage = d.data.amount / d3.sum(cutTypeData, d => d.amount) * 100;
+                    return percentage > 5 ? 1 : 0;
+                });
+            
+            // Add title
+            svg.append("text")
+                .attr("x", 0)
+                .attr("y", -height / 2 + 20)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .text("Distribution of Budget Cuts by Category");
+            
+            // Helper function for middle angle
+            function midAngle(d) {
+                return d.startAngle + (d.endAngle - d.startAngle) / 2;
+            }
+            
+            // Helper function to extract account type from account string
+            function extractAccountType(accountStr) {
+                if (!accountStr) return "Other";
+                
+                accountStr = accountStr.toString();
+                
+                if (accountStr.includes("Professional Services")) {
+                    return "Professional Services";
+                } else if (accountStr.includes("Salaries") || accountStr.includes("Wages")) {
+                    return "Salaries & Wages";
+                } else if (accountStr.includes("Temporary Services") || accountStr.includes("Overtime")) {
+                    return "Temporary & Overtime";
+                } else if (accountStr.includes("Contracted Services")) {
+                    return "Contracted Services";
+                } else if (accountStr.includes("Office Supplies") || accountStr.includes("Supplies & Materials")) {
+                    return "Supplies & Materials";
+                } else if (accountStr.includes("Travel")) {
+                    return "Travel";
+                } else if (accountStr.includes("Training") || accountStr.includes("Development")) {
+                    return "Training & Development";
+                } else if (accountStr.includes("Other Services")) {
+                    return "Other Services";
+                } else if (accountStr.includes("Technical") || accountStr.includes("Tools")) {
+                    return "Technical Equipment";
+                } else if (accountStr.includes("Factual & Informational")) {
+                    return "Information Services";
+                } else {
+                    return "Other";
+                }
+            }
+        }
+        
+        // Execute all chart creation functions
+        window.addEventListener('load', function() {
+            createPercentCutChart();
+            createAbsoluteCutChart();
+            createBeforeAfterChart();
+            createCutTypesChart();
+        });
+    </script>
+</body>
+</html>
