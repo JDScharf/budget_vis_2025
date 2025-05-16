@@ -558,24 +558,95 @@ function createAbsoluteCutChart() {
             .tickFormat(d => `$${d3.format(".3s")(d).replace("M", " Million")}`));
 
     // Bars with stacking
-    nestedData.forEach(dept => {
-        let yOffset = 0;
 
-        dept.parts.forEach(part => {
-            svg.append("rect")
-                .attr("x", x(dept.departmentBroad))
-                .attr("y", y(yOffset + part.absoluteCut))
-                .attr("width", x.bandwidth())
-                .attr("height", y(yOffset) - y(yOffset + part.absoluteCut))
-                .attr("fill", "#F24932")
-                .attr("stroke", "black")
-                .attr("stroke-width", 1)
-                .append("title")
-                // .text(`${part.departmentBroad} - ${part.departmentSpecific}\nCut: $${d3.format(",")(part.absoluteCut)}`);
+nestedData.forEach(dept => {
+    let yOffset = 0;
 
-            yOffset += part.absoluteCut;
-        });
+    dept.parts.forEach(part => {
+        svg.append("rect")
+            .attr("x", x(dept.departmentBroad))
+            .attr("y", y(yOffset + part.absoluteCut))
+            .attr("width", x.bandwidth())
+            .attr("height", y(yOffset) - y(yOffset + part.absoluteCut))
+            .attr("fill", "#F24932")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .on("mouseover", function (event) {
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", 0.9);
+
+                const amendments = [];
+                for (let i = 1; i <= 10; i++) {
+                    const acct = part.entries[0][`accountAmmend${i}`];
+                    const amt = part.entries[0][`amtChanged${i}`];
+                    if (acct && amt !== 0 && !isNaN(amt)) {
+                        amendments.push({ account: acct, amount: amt });
+                    }
+                }
+
+                const tableRows = amendments.map(a =>
+                    `<tr>
+                        <td style="padding: 2px 8px; text-align: left; border: 1px solid white">${a.account}</td>
+                        <td style="padding: 2px 8px; text-align: right; border: 1px solid white">$${d3.format(",")(a.amount)}</td>
+                    </tr>`
+                ).join("");
+
+                tooltip.html(`
+                    <strong>${part.departmentBroad} - ${part.departmentSpecific}</strong><br>
+                    Original Budget: $${d3.format(",")(Math.round(part.entries[0].proposedBudget))}<br>
+                    Total Cut: $${d3.format(",")(Math.round(part.entries[0].absoluteCut))}<br>
+                    Percentage Cut: ${Math.abs(part.entries[0].change).toFixed(2)}%<br><br>
+                    <table style="border-collapse: collapse; border: 1px solid white">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding-right: 10px; border: 1px solid white">Account Amended</th>
+                                <th style="text-align: right; border: 1px solid white">Amount Changed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mousemove", function (event) {
+                tooltip.style("left", (event.pageX + 10) + "px")
+                       .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+
+        yOffset += part.absoluteCut;
     });
+});
+
+
+    // nestedData.forEach(dept => {
+    //     let yOffset = 0;
+
+    //     dept.parts.forEach(part => {
+    //         svg.append("rect")
+    //             .attr("x", x(dept.departmentBroad))
+    //             .attr("y", y(yOffset + part.absoluteCut))
+    //             .attr("width", x.bandwidth())
+    //             .attr("height", y(yOffset) - y(yOffset + part.absoluteCut))
+    //             .attr("fill", "#F24932")
+    //             .attr("stroke", "black")
+    //             .attr("stroke-width", 1)
+    //             .append("title")
+    //             .text(`${part.departmentBroad} - ${part.departmentSpecific}\nCut: $${d3.format(",")(part.absoluteCut)}`);
+
+    //         yOffset += part.absoluteCut;
+    //     });
+    // });
+
+
 
     // Labels showing total cut amount at bottom of each bar
     svg.selectAll(".label")
@@ -595,79 +666,6 @@ function createAbsoluteCutChart() {
         .duration(1000)
         .delay((d, i) => 1000 + i * 50)
         .style("opacity", 1);
-        // .text(`${part.departmentBroad} - ${part.departmentSpecific}\nCut: $${d3.format(",")(part.absoluteCut)}`);
-
-            // Tooltip (unchanged)
-            nestedData.on("mouseover", function (event, d) {
-                d3.select(this).transition()
-                    .duration(200)
-                    .attr("opacity", 0.8);
-
-                tooltip.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-
-        //         tooltip.html(`
-        //     <strong>${d.departmentBroad}</strong><br>
-        //     Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
-        //     Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
-        //     Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
-        //     Areas Cut: ${d.accountAmmend1 + ' ' + d.accountAmmend2}<br>
-
-        // `)
-tooltip.html(() => {
-    const amendments = [];
-
-    for (let i = 1; i <= 10; i++) {
-        const acct = d[`accountAmmend${i}`];
-        const amt = d[`amtChanged${i}`];
-
-        if (acct && amt !== 0 && !isNaN(amt)) {
-            amendments.push({ account: acct, amount: amt });
-        }
-    }
-
-    const tableRows = amendments.map(a =>
-        `<tr>
-            <td style="padding: 2px 8px; text-align: left; border: 1px solid white">${a.account}</td>
-            <td style="padding: 2px 8px; text-align: right; border: 1px solid white">$${d3.format(",")(a.amount)}</td>
-        </tr>`
-    ).join("");
-
-    return `
-        <strong>${d.departmentBroad}</strong><br>
-        Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
-        Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
-        Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
-        <br>
-        <table style="border-collapse: collapse; border: 1px solid white">
-            <thead>
-                <tr>
-                    <th style="text-align: left; padding-right: 10px; border: 1px solid white">Account Amended</th>
-                    <th style="text-align: right; border: 1px solid white">Amount Changed</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tableRows}
-            </tbody>
-        </table>
-    `;
-})
-
-
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-                .on("mouseout", function () {
-                    d3.select(this).transition()
-                        .duration(500)
-                        .attr("opacity", 1);
-
-                    tooltip.transition()
-                        .duration(500)
-                        .style("opacity", 0);
-                });
-
 }
 
         // Chart 3: Before vs After Budget
