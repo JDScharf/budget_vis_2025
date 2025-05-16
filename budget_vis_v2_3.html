@@ -497,7 +497,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
         // Chart 2: Absolute Cut Values
         function createAbsoluteCutChart() {
             const filteredData = parsedData.filter(d => d.departmentBroad !== "Revenue Changes");
-            // const sortedData = [...filteredData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
+            const separatedData = [...filteredData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
 
             const groupedData = Array.from(
                 d3.rollup(
@@ -576,10 +576,10 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .append("text")
                 .attr("class", "label")
                 .attr("x", d => x(d.departmentBroad) + x.bandwidth() / 2)
-                .attr("y", d => y(-d.totalCut) - 15)  // Inside the bar
+                .attr("y", d => y(-d.totalCut) + 15)  // Inside the bar
                 .attr("text-anchor", "middle")
                 .style("font-size", "13px")
-                .style("fill", "#fff")
+                .style("fill", "#F24932")
                 .style("opacity", 0)
                 .text(d => `$${d3.format(".2s")(d.totalCut)}`)
                 .transition()
