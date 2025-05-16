@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syracuse Budget Cuts Analysis</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barriecito&family=Finlandica&family=Frank+Ruhl+Libre:wght@300..900&family=Lora:ital,wght@0,400..700;1,400..700&family=Raleway:ital,wght@0,849;1,849&display=swap"
+        rel="stylesheet">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 372;
+  font-style: normal; */
             line-height: 1.6;
             color: #333;
             max-width: 800px;
@@ -15,18 +25,24 @@
             padding: 15px;
             background-color: #f9f9f9;
         }
-        
-        h1, h2, h3 {
+
+        h1,
+        h2,
+        h3 {
             color: #2C3E50;
             margin-top: 30px;
+            font-family: "Lora", serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
         }
-        
+
         h1 {
             border-bottom: 2px solid #3498DB;
             padding-bottom: 10px;
             text-align: center;
         }
-        
+
         .chart-container {
             margin: 40px 0;
             padding: 20px;
@@ -34,7 +50,7 @@
             background-color: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .explanation {
             background-color: #EBF5FB;
             border-left: 4px solid #3498DB;
@@ -42,7 +58,7 @@
             margin: 20px 0;
             border-radius: 0 5px 5px 0;
         }
-        
+
         .tooltip {
             position: absolute;
             padding: 10px;
@@ -54,25 +70,25 @@
             max-width: 250px;
             z-index: 10;
         }
-        
+
         svg {
             overflow: visible;
         }
-        
+
         .axis text {
             font-size: 12px;
         }
-        
+
         @media (max-width: 600px) {
             .axis text {
                 font-size: 10px;
             }
         }
-        
+
         .legend {
             font-size: 12px;
         }
-        
+
         .intro {
             border-radius: 5px;
             background-color: #2C3E50;
@@ -80,21 +96,25 @@
             padding: 20px;
             margin-bottom: 30px;
         }
-        
+
         .chart-title {
             text-align: center;
             margin-bottom: 20px;
             font-weight: bold;
             color: #2C3E50;
+            font-family: "Raleway", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 600;
+            font-style: normal;
         }
-        
+
         .chart-subtitle {
             text-align: center;
             font-size: 14px;
             margin-bottom: 20px;
             color: #7F8C8D;
         }
-        
+
         button {
             background-color: #3498DB;
             color: white;
@@ -105,16 +125,16 @@
             font-size: 14px;
             margin: 5px;
         }
-        
+
         button:hover {
             background-color: #2980B9;
         }
-        
+
         .highlight {
             color: #E74C3C;
             font-weight: bold;
         }
-        
+
         .footer {
             margin-top: 40px;
             text-align: center;
@@ -125,39 +145,51 @@
         .intro h1 {
             color: white;
         }
+
+        #budget-cuts-subtltle {
+            margin-bottom: 175px;
+        }
     </style>
 </head>
+
 <body>
     <div id="content">
         <div class="intro">
             <h1>Syracuse Budget Cuts 2025: Impact Analysis</h1>
-            <p>This visualization explores the proposed budget amendments for Syracuse in 2025, highlighting departments facing significant cuts and their potential impact on city services.</p>
+            <p>This visualization explores the proposed budget amendments for Syracuse in 2025, highlighting departments
+                facing significant cuts and their potential impact on city services.</p>
         </div>
-        
+
         <!-- Chart 1: Percent Cut by Department -->
         <div class="chart-container">
             <div class="chart-title">Percentage of Budget Cuts by Department</div>
             <div class="chart-subtitle">Departments ordered by percentage of cuts (highest to lowest)</div>
             <div id="percent-cut-chart"></div>
         </div>
-        
+
         <div class="explanation">
             <h3>Understanding the Budget Cut Percentages</h3>
-            <p>This chart shows the percentage of budget cuts for each department. The Department of Assessment is facing the largest percentage cut at over 52%, followed by the Office of Gun Violence Prevention at nearly 38%. These drastic reductions could severely impair these departments' abilities to fulfill their missions, particularly in areas that directly affect public safety and property valuations.</p>
+            <p>This chart shows the percentage of budget cuts for each department. The Department of Assessment is
+                facing the largest percentage cut at over 52%, followed by the Office of Gun Violence Prevention at
+                nearly 38%. These drastic reductions could severely impair these departments' abilities to fulfill their
+                missions, particularly in areas that directly affect public safety and property valuations.</p>
         </div>
-        
+
         <!-- Chart 2: Absolute Cut Values -->
         <div class="chart-container">
             <div class="chart-title">Dollar Amount of Budget Cuts by Department</div>
-            <div class="chart-subtitle">Showing the actual monetary impact of cuts</div>
+            <div class="chart-subtitle" id="budget-cuts-subtltle">Showing the actual monetary impact of cuts</div>
             <div id="absolute-cut-chart"></div>
         </div>
-        
+
         <div class="explanation">
             <h3>The Real Dollar Impact</h3>
-            <p>While percentage cuts tell one story, the actual dollar amounts reveal another dimension. The Department of Assessment and Law Department are losing the most funding in absolute terms, with cuts of $1,000,000 and $869,067 respectively. These substantial reductions will likely result in reduced staffing, fewer services, and potential delays in critical city functions.</p>
+            <p>While percentage cuts tell one story, the actual dollar amounts reveal another dimension. The Department
+                of Assessment and Law Department are losing the most funding in absolute terms, with cuts of $1,000,000
+                and $869,067 respectively. These substantial reductions will likely result in reduced staffing, fewer
+                services, and potential delays in critical city functions.</p>
         </div>
-        
+
         <!-- Chart 3: Before vs After Budget -->
         <div class="chart-container">
             <div class="chart-title">Proposed vs. Amended Budget Comparison</div>
@@ -168,24 +200,32 @@
                 <button id="sort-cut-btn">Sort by Cut Percentage</button>
             </div>
         </div>
-        
+
         <div class="explanation">
             <h3>Before vs. After: The Amended Budget Impact</h3>
-            <p>This comparison highlights the stark differences between originally proposed budgets and the amended figures after cuts. The ability to sort by either budget size or cut percentage reveals patterns in how cuts were distributed. Notice how some smaller departments are taking proportionally larger hits, while some larger departments see significant dollar cuts that represent smaller percentages of their overall budgets.</p>
+            <p>This comparison highlights the stark differences between originally proposed budgets and the amended
+                figures after cuts. The ability to sort by either budget size or cut percentage reveals patterns in how
+                cuts were distributed. Notice how some smaller departments are taking proportionally larger hits, while
+                some larger departments see significant dollar cuts that represent smaller percentages of their overall
+                budgets.</p>
         </div>
-        
+
         <!-- Chart 4: Cut Types Analysis -->
         <div class="chart-container">
             <div class="chart-title">Types of Budget Cuts by Category</div>
             <div class="chart-subtitle">Analyzing where cuts are being made within departments</div>
             <div id="cut-types-chart"></div>
         </div>
-        
+
         <div class="explanation">
             <h3>Where Are The Cuts Coming From?</h3>
-            <p>This analysis reveals concerning patterns in the types of cuts being implemented. Professional Services accounts for the largest portion of cuts, which could indicate reduced expert consultations and specialized assistance. Significant cuts to salaries suggest potential layoffs or unfilled positions, directly impacting service delivery. These patterns show how budget decisions may affect the quality and availability of city services.</p>
+            <p>This analysis reveals concerning patterns in the types of cuts being implemented. Professional Services
+                accounts for the largest portion of cuts, which could indicate reduced expert consultations and
+                specialized assistance. Significant cuts to salaries suggest potential layoffs or unfilled positions,
+                directly impacting service delivery. These patterns show how budget decisions may affect the quality and
+                availability of city services.</p>
         </div>
-        
+
         <div class="footer">
             <p>Data source: Syracuse Budget Amendments 2025</p>
             <p>Created with D3.js | Last updated: May 2025</p>
@@ -255,11 +295,11 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
         const parsedData = [];
         rawData.split('\n').forEach((row, index) => {
             if (index === 0) return; // Skip header
-            
+
             const cells = [];
             let currentCell = '';
             let insideQuotes = false;
-            
+
             // Parse CSV considering quoted commas
             for (let i = 0; i < row.length; i++) {
                 if (row[i] === '"') {
@@ -272,31 +312,46 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 }
             }
             cells.push(currentCell.trim());
-            
+
             // Fix any missing values and calculate if needed
             const proposedBudget = cleanNumber(cells[2]);
             const amendedBudget = cleanNumber(cells[23]);
             let change = cleanNumber(cells[25]);
-            
+
             // Some entries have #VALUE! for percent cut, recalculate those
             if (isNaN(change)) {
                 change = ((amendedBudget - proposedBudget) / proposedBudget * 100);
             }
-            
+
             const item = {
-                department: cells[0].replace(/"/g, ''),
+                departmentBroad: cells[0].replace(/"/g, ''),
+                departmentSpecific: cells[1].replace(/"/g, ''),
                 proposedBudget: proposedBudget,
                 amendedBudget: amendedBudget,
                 absoluteCut: proposedBudget - amendedBudget,
                 change: change,
-                account1: cells[2],
-                amtChanged1: cleanNumber(cells[3]),
-                account2: cells[4],
-                amtChanged2: cleanNumber(cells[5]),
-                account3: cells[6],
-                amtChanged3: cleanNumber(cells[7])
+                accountAmmend1: cells[3],
+                amtChanged1: cleanNumber(cells[4]),
+                accountAmmend2: cells[5],
+                amtChanged2: cleanNumber(cells[6]),
+                accountAmmend3: cells[7],
+                amtChanged3: cleanNumber(cells[8]),
+                accountAmmend4: cells[9],
+                amtChanged4: cleanNumber(cells[10]),
+                accountAmmend5: cells[11],
+                amtChanged5: cleanNumber(cells[12]),
+                accountAmmend6: cells[13],
+                amtChanged6: cleanNumber(cells[14]),
+               accountAmmend7: cells[15],
+                amtChanged7: cleanNumber(cells[16]),
+                accountAmmend8: cells[17],
+                amtChanged8: cleanNumber(cells[18]),
+                accountAmmend9: cells[19],
+                amtChanged9: cleanNumber(cells[20]),
+                accountAmmend10: cells[21],
+                amtChanged10: cleanNumber(cells[22]),
             };
-            
+
             parsedData.push(item);
         });
 
@@ -308,34 +363,34 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
 
         // Create a color scale for departments
         const colorScale = d3.scaleOrdinal()
-            .domain(parsedData.map(d => d.department))
+            .domain(parsedData.map(d => d.departmentBroad))
             .range(d3.schemeCategory10);
 
         // Chart 1: Percent Cut by Department
         function createPercentChangeChart() {
             const sortedData = [...parsedData].sort((a, b) => b.change - a.change);
-            
-            const margin = {top: 30, right: 20, bottom: 120, left: 60};
+
+            const margin = { top: 30, right: 20, bottom: 120, left: 60 };
             const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
             const height = 500 - margin.top - margin.bottom;
-            
+
             const svg = d3.select("#percent-cut-chart")
                 .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
-            
+
             // Create scales
             const x = d3.scaleBand()
-                .domain(sortedData.map(d => d.department))
+                .domain(sortedData.map(d => d.departmentBroad))
                 .range([0, width])
                 .padding(0.2);
-            
+
             const y = d3.scaleLinear()
                 .domain([0, d3.max(sortedData, d => Math.abs(d.change)) * 1.1])
                 .range([height, 0]);
-            
+
             // Create axes
             svg.append("g")
                 .attr("transform", `translate(0,${height})`)
@@ -345,17 +400,17 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .style("text-anchor", "end")
                 .attr("dx", "-.8em")
                 .attr("dy", ".15em");
-            
+
             svg.append("g")
                 .call(d3.axisLeft(y).tickFormat(d => `${d}%`));
-            
+
             // Create bars
             const bars = svg.selectAll(".bar")
                 .data(sortedData)
                 .enter()
                 .append("rect")
                 .attr("class", "bar")
-                .attr("x", d => x(d.department))
+                .attr("x", d => x(d.departmentBroad))
                 .attr("width", x.bandwidth())
                 .attr("y", height)
                 .attr("height", 0)
@@ -367,21 +422,21 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     if (d.change > 5) return "#f1c40f";
                     return "#27ae60";
                 });
-            
+
             // Animation
             bars.transition()
                 .duration(1000)
                 .delay((d, i) => i * 50)
                 .attr("y", d => y(Math.abs(d.change)))
                 .attr("height", d => height - y(Math.abs(d.change)));
-            
+
             // Add labels
             svg.selectAll(".label")
                 .data(sortedData)
                 .enter()
                 .append("text")
                 .attr("class", "label")
-                .attr("x", d => x(d.department) + x.bandwidth() / 2)
+                .attr("x", d => x(d.departmentBroad) + x.bandwidth() / 2)
                 .attr("y", d => y(Math.abs(d.change)) - 5)
                 .attr("text-anchor", "middle")
                 .style("font-size", "11px")
@@ -391,19 +446,19 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .duration(1000)
                 .delay((d, i) => 1000 + i * 50)
                 .style("opacity", 1);
-            
+
             // Add tooltip functionality
-            bars.on("mouseover", function(event, d) {
+            bars.on("mouseover", function (event, d) {
                 d3.select(this).transition()
                     .duration(200)
                     .attr("opacity", 0.8);
-                
+
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);
-                
+
                 tooltip.html(`
-                    <strong>${d.department}</strong><br>
+                    <strong>${d.departmentBroad}</strong><br>
                     Proposed Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
                     Amended Budget: $${d3.format(",")(Math.round(d.amendedBudget))}<br>
                     Cut: ${Math.abs(d.change).toFixed(2)}% ($${d3.format(",")(Math.round(d.absoluteCut))})
@@ -411,16 +466,16 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
-                d3.select(this).transition()
-                    .duration(500)
-                    .attr("opacity", 1);
-                
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            });
-            
+                .on("mouseout", function () {
+                    d3.select(this).transition()
+                        .duration(500)
+                        .attr("opacity", 1);
+
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
             // Add title
             svg.append("text")
                 .attr("x", width / 2)
@@ -429,7 +484,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .style("font-size", "16px")
                 .style("font-weight", "bold")
                 .text("Budget Cut Percentages by Department");
-            
+
             // Add y-axis label
             svg.append("text")
                 .attr("transform", "rotate(-90)")
@@ -438,246 +493,272 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .attr("text-anchor", "middle")
                 .text("Percentage Cut");
         }
-        
+
         // Chart 2: Absolute Cut Values
         function createAbsoluteCutChart() {
-            const sortedData = [...parsedData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
-            
-            const margin = {top: 30, right: 20, bottom: 120, left: 80};
+            const filteredData = parsedData.filter(d => d.departmentBroad !== "Revenue Changes");
+            const sortedData = [...filteredData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
+
+            const margin = { top: 30, right: 20, bottom: 120, left: 80 };
             const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
             const height = 500 - margin.top - margin.bottom;
-            
+
             const svg = d3.select("#absolute-cut-chart")
                 .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
-            
-            // Create scales
+
             const x = d3.scaleBand()
-                .domain(sortedData.map(d => d.department))
+                .domain(sortedData.map(d => d.departmentBroad))
                 .range([0, width])
                 .padding(0.2);
-            
+
             const y = d3.scaleLinear()
-                .domain([0, d3.max(sortedData, d => d.absoluteCut) * 1.1])
-                .range([height, 0]);
-            
-            // Create axes
+                .domain([0, -d3.max(sortedData, d => d.absoluteCut) * 1.1])  // Negative domain
+                .range([0, height]);  // Inverted
+
+            // X-axis
             svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
+                .attr("transform", `translate(0,0)`)  // X-axis at the top now
+                .call(d3.axisTop(x))
                 .selectAll("text")
                 .attr("transform", "rotate(-45)")
-                .style("text-anchor", "end")
-                .attr("dx", "-.8em")
-                .attr("dy", ".15em");
-            
+                .style("text-anchor", "start")
+                .style("font-size", "1.5em")
+                .attr("dx", "2em")
+                .attr("dy", "-0.5em")
+
+            // Y-axis
             svg.append("g")
-                .call(d3.axisLeft(y).tickFormat(d => `$${d3.format(",")(d)}`));
-            
-            // Create bars with gradient fill
+       .call(d3.axisLeft(y)
+        .tickFormat(d => `$${d3.format(".2s")(d).replace("M", " Million")}`));         
+                // .call(d3.axisLeft(y).tickFormat(d => `$${d3.format(",")(-d)}`));  // Show positive $ values
+
+            // Bars (inverted: go downward)
             const bars = svg.selectAll(".bar")
                 .data(sortedData)
                 .enter()
                 .append("rect")
                 .attr("class", "bar")
-                .attr("x", d => x(d.department))
+                .attr("x", d => x(d.departmentBroad))
                 .attr("width", x.bandwidth())
-                .attr("y", height)
+                .attr("y", 0)
                 .attr("height", 0)
-                .attr("fill", (d, i) => {
-                    // Color indicating severity in absolute dollars
-                    if (d.absoluteCut > 500000) return "#c0392b";
-                    if (d.absoluteCut > 250000) return "#e74c3c";
-                    if (d.absoluteCut > 100000) return "#f39c12";
-                    if (d.absoluteCut > 50000) return "#f1c40f";
-                    return "#27ae60";
+                .attr("fill", d => {
+                    // if (d.absoluteCut > 2000000) return "#F24932";
+                    // if (d.absoluteCut > 1000000) return "#F27932";
+                    if (d.absoluteCut > 0) return "#F24932";
                 });
-            
-            // Animation
+
             bars.transition()
                 .duration(1000)
                 .delay((d, i) => i * 50)
-                .attr("y", d => y(d.absoluteCut))
-                .attr("height", d => height - y(d.absoluteCut));
-            
-            // Add labels
+                .attr("y", 0)
+                .attr("height", d => y(-d.absoluteCut));  // Negative for downward growth
+
+            // Labels
             svg.selectAll(".label")
                 .data(sortedData)
                 .enter()
                 .append("text")
                 .attr("class", "label")
-                .attr("x", d => x(d.department) + x.bandwidth() / 2)
-                .attr("y", d => y(d.absoluteCut) - 5)
+                .attr("x", d => x(d.departmentBroad) + x.bandwidth() / 2)
+                .attr("y", d => y(-d.absoluteCut) - 15)  // Inside the bar
                 .attr("text-anchor", "middle")
-                .style("font-size", "11px")
+                .style("font-size", "13px")
+                .style("fill", "#fff")
                 .style("opacity", 0)
                 .text(d => `$${d3.format(".2s")(d.absoluteCut)}`)
                 .transition()
                 .duration(1000)
                 .delay((d, i) => 1000 + i * 50)
                 .style("opacity", 1);
-            
-            // Add tooltip functionality
-            bars.on("mouseover", function(event, d) {
+
+            // Tooltip (unchanged)
+            bars.on("mouseover", function (event, d) {
                 d3.select(this).transition()
                     .duration(200)
                     .attr("opacity", 0.8);
-                
+
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);
-                
-                tooltip.html(`
-                    <strong>${d.department}</strong><br>
-                    Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
-                    Percentage: ${Math.abs(d.change).toFixed(2)}%<br>
-                    Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}
-                `)
+
+        //         tooltip.html(`
+        //     <strong>${d.departmentBroad}</strong><br>
+        //     Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
+        //     Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
+        //     Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
+        //     Areas Cut: ${d.accountAmmend1 + ' ' + d.accountAmmend2}<br>
+
+        // `)
+tooltip.html(() => {
+    const amendments = [];
+
+    for (let i = 1; i <= 10; i++) {
+        const acct = d[`accountAmmend${i}`];
+        const amt = d[`amtChanged${i}`];
+
+        if (acct && amt !== 0 && !isNaN(amt)) {
+            amendments.push({ account: acct, amount: amt });
+        }
+    }
+
+    const tableRows = amendments.map(a =>
+        `<tr>
+            <td style="padding: 2px 8px; text-align: left; border: 1px solid white">${a.account}</td>
+            <td style="padding: 2px 8px; text-align: right; border: 1px solid white">$${d3.format(",")(a.amount)}</td>
+        </tr>`
+    ).join("");
+
+    return `
+        <strong>${d.departmentBroad}</strong><br>
+        Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
+        Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
+        Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
+        <br>
+        <table style="border-collapse: collapse; border: 1px solid white">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding-right: 10px; border: 1px solid white">Account Amended</th>
+                    <th style="text-align: right; border: 1px solid white">Amount Changed</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+    `;
+})
+
+
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
-                d3.select(this).transition()
-                    .duration(500)
-                    .attr("opacity", 1);
-                
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            });
-            
-            // Add title
-            svg.append("text")
-                .attr("x", width / 2)
-                .attr("y", -10)
-                .attr("text-anchor", "middle")
-                .style("font-size", "16px")
-                .style("font-weight", "bold")
-                .text("Top 15 Departments by Dollar Amount of Cuts");
-            
-            // Add y-axis label
-            svg.append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", -margin.left + 15)
-                .attr("x", -height / 2)
-                .attr("text-anchor", "middle")
-                .text("Dollar Amount Cut");
+                .on("mouseout", function () {
+                    d3.select(this).transition()
+                        .duration(500)
+                        .attr("opacity", 1);
+
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
         }
-        
+
         // Chart 3: Before vs After Budget
         function createBeforeAfterChart() {
             let sortedData = [...parsedData].sort((a, b) => b.proposedBudget - a.proposedBudget);
-            
-            const margin = {top: 30, right: 120, bottom: 120, left: 80};
+
+            const margin = { top: 30, right: 120, bottom: 120, left: 80 };
             const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
             const height = 600 - margin.top - margin.bottom;
-            
+
             const svg = d3.select("#before-after-chart")
                 .append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
-            
+
             // Create scales
             const y = d3.scaleBand()
-                .domain(sortedData.map(d => d.department))
+                .domain(sortedData.map(d => d.departmentBroad))
                 .range([0, height])
                 .padding(0.2);
-            
+
             const x = d3.scaleLinear()
                 .domain([0, d3.max(sortedData, d => d.proposedBudget) * 1.1])
                 .range([0, width]);
-            
+
             // Create axes
             svg.append("g")
                 .call(d3.axisLeft(y));
-            
+
             svg.append("g")
                 .attr("transform", `translate(0,${height})`)
                 .call(d3.axisBottom(x).tickFormat(d => `$${d3.format(".2s")(d)}`));
-            
+
             // Create grouped bars for before/after
             const beforeBars = svg.selectAll(".before-bar")
                 .data(sortedData)
                 .enter()
                 .append("rect")
                 .attr("class", "before-bar")
-                .attr("y", d => y(d.department))
+                .attr("y", d => y(d.departmentBroad))
                 .attr("height", y.bandwidth())
                 .attr("x", 0)
                 .attr("width", 0)
                 .attr("fill", "#3498db")
                 .attr("opacity", 0.8);
-            
+
             const afterBars = svg.selectAll(".after-bar")
                 .data(sortedData)
                 .enter()
                 .append("rect")
                 .attr("class", "after-bar")
-                .attr("y", d => y(d.department) + y.bandwidth() / 4)
+                .attr("y", d => y(d.departmentBroad) + y.bandwidth() / 4)
                 .attr("height", y.bandwidth() / 2)
                 .attr("x", 0)
                 .attr("width", 0)
                 .attr("fill", "#e74c3c");
-            
+
             // Animation
             beforeBars.transition()
                 .duration(1000)
                 .delay((d, i) => i * 30)
                 .attr("width", d => x(d.proposedBudget));
-            
+
             afterBars.transition()
                 .duration(1000)
                 .delay((d, i) => i * 30 + 500)
                 .attr("width", d => x(d.amendedBudget));
-            
+
             // Add legend
             const legend = svg.append("g")
                 .attr("class", "legend")
                 .attr("transform", `translate(${width + 10}, 0)`);
-            
+
             legend.append("rect")
                 .attr("x", 0)
                 .attr("y", 0)
                 .attr("width", 18)
                 .attr("height", 18)
                 .attr("fill", "#3498db");
-            
+
             legend.append("text")
                 .attr("x", 24)
                 .attr("y", 9)
                 .attr("dy", ".35em")
                 .text("Proposed Budget");
-            
+
             legend.append("rect")
                 .attr("x", 0)
                 .attr("y", 24)
                 .attr("width", 18)
                 .attr("height", 18)
                 .attr("fill", "#e74c3c");
-            
+
             legend.append("text")
                 .attr("x", 24)
                 .attr("y", 33)
                 .attr("dy", ".35em")
                 .text("Amended Budget");
-            
+
             // Add tooltip functionality
-            beforeBars.on("mouseover", function(event, d) {
+            beforeBars.on("mouseover", function (event, d) {
                 d3.select(this).transition()
                     .duration(200)
                     .attr("opacity", 1);
-                
+
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);
-                
+
                 tooltip.html(`
-                    <strong>${d.department}</strong><br>
+                    <strong>${d.departmentBroad}</strong><br>
                     Proposed Budget: ${d3.format(",")(Math.round(d.proposedBudget))}<br>
                     Cut Amount: ${d3.format(",")(Math.round(d.absoluteCut))}<br>
                     Cut Percentage: ${Math.abs(d.change).toFixed(2)}%
@@ -685,27 +766,27 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
-                d3.select(this).transition()
-                    .duration(500)
-                    .attr("opacity", 0.8);
-                
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            });
-            
-            afterBars.on("mouseover", function(event, d) {
+                .on("mouseout", function () {
+                    d3.select(this).transition()
+                        .duration(500)
+                        .attr("opacity", 0.8);
+
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            afterBars.on("mouseover", function (event, d) {
                 d3.select(this).transition()
                     .duration(200)
                     .attr("opacity", 0.8);
-                
+
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);
-                
+
                 tooltip.html(`
-                    <strong>${d.department}</strong><br>
+                    <strong>${d.departmentBroad}</strong><br>
                     Amended Budget: ${d3.format(",")(Math.round(d.amendedBudget))}<br>
                     Cut Amount: ${d3.format(",")(Math.round(d.absoluteCut))}<br>
                     Cut Percentage: ${Math.abs(d.change).toFixed(2)}%
@@ -713,16 +794,16 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
-                d3.select(this).transition()
-                    .duration(500)
-                    .attr("opacity", 1);
-                
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            });
-            
+                .on("mouseout", function () {
+                    d3.select(this).transition()
+                        .duration(500)
+                        .attr("opacity", 1);
+
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
             // Add title
             svg.append("text")
                 .attr("x", width / 2)
@@ -731,85 +812,85 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .style("font-size", "16px")
                 .style("font-weight", "bold")
                 .text("Proposed vs. Amended Budget by Department");
-            
+
             // Add x-axis label
             svg.append("text")
                 .attr("x", width / 2)
                 .attr("y", height + 40)
                 .attr("text-anchor", "middle")
                 .text("Budget Amount ($)");
-            
+
             // Add sorting functionality
-            d3.select("#sort-budget-btn").on("click", function() {
+            d3.select("#sort-budget-btn").on("click", function () {
                 sortedData = [...parsedData].sort((a, b) => b.proposedBudget - a.proposedBudget);
                 updateChart();
             });
-            
-            d3.select("#sort-cut-btn").on("click", function() {
+
+            d3.select("#sort-cut-btn").on("click", function () {
                 sortedData = [...parsedData].sort((a, b) => b.change - a.change);
                 updateChart();
             });
-            
+
             function updateChart() {
                 // Update y domain
-                y.domain(sortedData.map(d => d.department));
-                
+                y.domain(sortedData.map(d => d.departmentBroad));
+
                 // Update y-axis with transition
                 svg.select(".y-axis")
                     .transition()
                     .duration(750)
                     .call(d3.axisLeft(y));
-                
+
                 // Update bars
                 beforeBars.data(sortedData)
                     .transition()
                     .duration(750)
-                    .attr("y", d => y(d.department))
+                    .attr("y", d => y(d.departmentBroad))
                     .attr("width", d => x(d.proposedBudget));
-                
+
                 afterBars.data(sortedData)
                     .transition()
                     .duration(750)
-                    .attr("y", d => y(d.department) + y.bandwidth() / 4)
+                    .attr("y", d => y(d.departmentBroad) + y.bandwidth() / 4)
                     .attr("width", d => x(d.amendedBudget));
             }
-            
+
             // Create y-axis with class for updates
             svg.append("g")
                 .attr("class", "y-axis")
                 .call(d3.axisLeft(y));
         }
-        
+
         // Chart 4: Cut Types Analysis
         function createCutTypesChart() {
             // Analyze cuts by category
             const categoryMap = new Map();
-            
+
             // Process all account amendments to categorize cuts
             parsedData.forEach(dept => {
                 // Process account 1
-                if (dept.account1) {
-                    const accountType = extractAccountType(dept.account1);
+                if (dept.accountAmmend1) {
+                    const accountType = extractAccountType(dept.accountAmmend1);
                     if (categoryMap.has(accountType)) {
                         categoryMap.set(accountType, categoryMap.get(accountType) + Math.abs(dept.amtChanged1));
                     } else {
                         categoryMap.set(accountType, Math.abs(dept.amtChanged1));
                     }
                 }
-                
+
                 // Process account 2
-                if (dept.account2 && dept.amtChanged2 !== 0) {
-                    const accountType = extractAccountType(dept.account2);
+                if (dept.accountAmmend2 && dept.amtChanged2 !== 0) {
+                    const accountType = extractAccountType(dept.accountAmmend2);
                     if (categoryMap.has(accountType)) {
                         categoryMap.set(accountType, categoryMap.get(accountType) + Math.abs(dept.amtChanged2));
                     } else {
                         categoryMap.set(accountType, Math.abs(dept.amtChanged2));
                     }
                 }
-                
+
                 // Process account 3
-                if (dept.account3 && dept.amtChanged3 !== 0) {
-                    const accountType = extractAccountType(dept.account3);
+                if (dept.accountAmmend3 && dept.amtChanged3 !== 0) {
+                    const accountType = extractAccountType(dept.accountAmmend3);
                     if (categoryMap.has(accountType)) {
                         categoryMap.set(accountType, categoryMap.get(accountType) + Math.abs(dept.amtChanged3));
                     } else {
@@ -817,18 +898,18 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     }
                 }
             });
-            
+
             // Convert map to array for D3
-            const cutTypeData = Array.from(categoryMap, ([key, value]) => ({ 
-                category: key, 
-                amount: value 
+            const cutTypeData = Array.from(categoryMap, ([key, value]) => ({
+                category: key,
+                amount: value
             })).sort((a, b) => b.amount - a.amount);
-            
+
             // Define dimensions for pie chart
             const width = Math.min(500, window.innerWidth - 40);
             const height = 400;
             const radius = Math.min(width, height) / 2;
-            
+
             // Create SVG
             const svg = d3.select("#cut-types-chart")
                 .append("svg")
@@ -836,28 +917,28 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .attr("height", height)
                 .append("g")
                 .attr("transform", `translate(${width / 2},${height / 2})`);
-            
+
             // Create color scale
             const color = d3.scaleOrdinal()
                 .domain(cutTypeData.map(d => d.category))
                 .range(["#2c3e50", "#3498db", "#9b59b6", "#e74c3c", "#f1c40f", "#16a085", "#2ecc71", "#e67e22", "#1abc9c", "#95a5a6"]);
-            
+
             // Create pie chart
             const pie = d3.pie()
                 .value(d => d.amount)
                 .sort(null);
-            
+
             const data_ready = pie(cutTypeData);
-            
+
             // Create arc generator
             const arc = d3.arc()
                 .innerRadius(radius * 0.4)
                 .outerRadius(radius * 0.8);
-            
+
             const outerArc = d3.arc()
                 .innerRadius(radius * 0.9)
                 .outerRadius(radius * 0.9);
-            
+
             // Build the pie chart with animation
             const slices = svg.selectAll('path')
                 .data(data_ready)
@@ -868,16 +949,16 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .attr("stroke", "white")
                 .style("stroke-width", "2px")
                 .style("opacity", 0.7)
-                .on("mouseover", function(event, d) {
+                .on("mouseover", function (event, d) {
                     d3.select(this)
                         .style("opacity", 1);
-                    
+
                     tooltip.transition()
                         .duration(200)
                         .style("opacity", .9);
-                    
+
                     const percentage = (d.data.amount / d3.sum(cutTypeData, d => d.amount) * 100).toFixed(1);
-                    
+
                     tooltip.html(`
                         <strong>${d.data.category}</strong><br>
                         Amount: ${d3.format(",")(Math.round(d.data.amount))}<br>
@@ -886,24 +967,24 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                         .style("left", (event.pageX + 10) + "px")
                         .style("top", (event.pageY - 28) + "px");
                 })
-                .on("mouseout", function() {
+                .on("mouseout", function () {
                     d3.select(this)
                         .style("opacity", 0.7);
-                    
+
                     tooltip.transition()
                         .duration(500)
                         .style("opacity", 0);
                 });
-            
+
             // Animation
             slices
                 .transition()
                 .duration(1000)
-                .attrTween('d', function(d) {
-                    const i = d3.interpolate({startAngle: 0, endAngle: 0}, d);
-                    return function(t) { return arc(i(t)); };
+                .attrTween('d', function (d) {
+                    const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+                    return function (t) { return arc(i(t)); };
                 });
-            
+
             // Add polylines for labels
             const polylines = svg.selectAll('polyline')
                 .data(data_ready)
@@ -913,12 +994,12 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .style("stroke", "black")
                 .style("opacity", 0.3)
                 .style("stroke-width", "1px")
-                .attr('points', function(d) {
+                .attr('points', function (d) {
                     const pos = outerArc.centroid(d);
                     pos[0] = radius * 0.95 * (midAngle(d) < Math.PI ? 1 : -1);
                     return [arc.centroid(d), outerArc.centroid(d), pos];
                 });
-            
+
             // Add labels with animation
             const labels = svg.selectAll('text')
                 .data(data_ready)
@@ -929,25 +1010,25 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     const percentage = (d.data.amount / d3.sum(cutTypeData, d => d.amount) * 100).toFixed(1);
                     return `${d.data.category} (${percentage}%)`;
                 })
-                .attr('transform', function(d) {
+                .attr('transform', function (d) {
                     const pos = outerArc.centroid(d);
                     pos[0] = radius * 0.99 * (midAngle(d) < Math.PI ? 1 : -1);
                     return `translate(${pos})`;
                 })
-                .style('text-anchor', function(d) {
+                .style('text-anchor', function (d) {
                     return midAngle(d) < Math.PI ? 'start' : 'end';
                 })
                 .style("font-size", "12px");
-            
+
             labels.transition()
                 .delay(1000)
                 .duration(500)
-                .style("opacity", function(d) {
+                .style("opacity", function (d) {
                     // Only show labels for larger slices to avoid overlap
                     const percentage = d.data.amount / d3.sum(cutTypeData, d => d.amount) * 100;
                     return percentage > 5 ? 1 : 0;
                 });
-            
+
             // Add title
             svg.append("text")
                 .attr("x", 0)
@@ -956,18 +1037,18 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .style("font-size", "16px")
                 .style("font-weight", "bold")
                 .text("Distribution of Budget Cuts by Category");
-            
+
             // Helper function for middle angle
             function midAngle(d) {
                 return d.startAngle + (d.endAngle - d.startAngle) / 2;
             }
-            
+
             // Helper function to extract account type from account string
             function extractAccountType(accountStr) {
                 if (!accountStr) return "Other";
-                
+
                 accountStr = accountStr.toString();
-                
+
                 if (accountStr.includes("Professional Services")) {
                     return "Professional Services";
                 } else if (accountStr.includes("Salaries") || accountStr.includes("Wages")) {
@@ -993,9 +1074,9 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 }
             }
         }
-        
+
         // Execute all chart creation functions
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             createPercentChangeChart();
             createAbsoluteCutChart();
             createBeforeAfterChart();
@@ -1003,4 +1084,5 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
         });
     </script>
 </body>
+
 </html>
