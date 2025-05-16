@@ -342,7 +342,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 amtChanged5: cleanNumber(cells[12]),
                 accountAmmend6: cells[13],
                 amtChanged6: cleanNumber(cells[14]),
-               accountAmmend7: cells[15],
+                accountAmmend7: cells[15],
                 amtChanged7: cleanNumber(cells[16]),
                 accountAmmend8: cells[17],
                 amtChanged8: cleanNumber(cells[18]),
@@ -497,7 +497,21 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
         // Chart 2: Absolute Cut Values
         function createAbsoluteCutChart() {
             const filteredData = parsedData.filter(d => d.departmentBroad !== "Revenue Changes");
-            const sortedData = [...filteredData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
+            // const sortedData = [...filteredData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
+
+            const groupedData = Array.from(
+                d3.rollup(
+                    filteredData,
+                    v => d3.sum(v, d => d.absoluteCut),
+                    d => d.departmentBroad
+                ),
+                ([departmentBroad, totalCut]) => ({ departmentBroad, totalCut })
+            );
+
+            const sortedData = groupedData
+                .sort((a, b) => b.totalCut - a.totalCut)
+                .slice(0, 15);
+
 
             const margin = { top: 30, right: 20, bottom: 120, left: 80 };
             const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
@@ -516,7 +530,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .padding(0.2);
 
             const y = d3.scaleLinear()
-                .domain([0, -d3.max(sortedData, d => d.absoluteCut) * 1.1])  // Negative domain
+                .domain([0, -d3.max(sortedData, d => d.totalCut) * 1.1])  // Negative domain
                 .range([0, height]);  // Inverted
 
             // X-axis
@@ -532,9 +546,8 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
 
             // Y-axis
             svg.append("g")
-       .call(d3.axisLeft(y)
-        .tickFormat(d => `$${d3.format(".2s")(d).replace("M", " Million")}`));         
-                // .call(d3.axisLeft(y).tickFormat(d => `$${d3.format(",")(-d)}`));  // Show positive $ values
+                .call(d3.axisLeft(y)
+                    .tickFormat(d => `$${d3.format(".2s")(d).replace("M", " Million")}`));
 
             // Bars (inverted: go downward)
             const bars = svg.selectAll(".bar")
@@ -547,16 +560,14 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .attr("y", 0)
                 .attr("height", 0)
                 .attr("fill", d => {
-                    // if (d.absoluteCut > 2000000) return "#F24932";
-                    // if (d.absoluteCut > 1000000) return "#F27932";
-                    if (d.absoluteCut > 0) return "#F24932";
+                    if (d.totalCut > 0) return "#F24932";
                 });
 
             bars.transition()
                 .duration(1000)
                 .delay((d, i) => i * 50)
                 .attr("y", 0)
-                .attr("height", d => y(-d.absoluteCut));  // Negative for downward growth
+                .attr("height", d => y(-d.totalCut));  // Negative for downward growth
 
             // Labels
             svg.selectAll(".label")
@@ -565,12 +576,12 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .append("text")
                 .attr("class", "label")
                 .attr("x", d => x(d.departmentBroad) + x.bandwidth() / 2)
-                .attr("y", d => y(-d.absoluteCut) - 15)  // Inside the bar
+                .attr("y", d => y(-d.totalCut) - 15)  // Inside the bar
                 .attr("text-anchor", "middle")
                 .style("font-size", "13px")
                 .style("fill", "#fff")
                 .style("opacity", 0)
-                .text(d => `$${d3.format(".2s")(d.absoluteCut)}`)
+                .text(d => `$${d3.format(".2s")(d.totalCut)}`)
                 .transition()
                 .duration(1000)
                 .delay((d, i) => 1000 + i * 50)
@@ -586,35 +597,27 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     .duration(200)
                     .style("opacity", .9);
 
-        //         tooltip.html(`
-        //     <strong>${d.departmentBroad}</strong><br>
-        //     Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
-        //     Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
-        //     Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
-        //     Areas Cut: ${d.accountAmmend1 + ' ' + d.accountAmmend2}<br>
+                tooltip.html(() => {
+                    const amendments = [];
 
-        // `)
-tooltip.html(() => {
-    const amendments = [];
+                    for (let i = 1; i <= 10; i++) {
+                        const acct = d[`accountAmmend${i}`];
+                        const amt = d[`amtChanged${i}`];
 
-    for (let i = 1; i <= 10; i++) {
-        const acct = d[`accountAmmend${i}`];
-        const amt = d[`amtChanged${i}`];
+                        if (acct && amt !== 0 && !isNaN(amt)) {
+                            amendments.push({ account: acct, amount: amt });
+                        }
+                    }
 
-        if (acct && amt !== 0 && !isNaN(amt)) {
-            amendments.push({ account: acct, amount: amt });
-        }
-    }
-
-    const tableRows = amendments.map(a =>
-        `<tr>
+                    const tableRows = amendments.map(a =>
+                        `<tr>
             <td style="padding: 2px 8px; text-align: left; border: 1px solid white">${a.account}</td>
             <td style="padding: 2px 8px; text-align: right; border: 1px solid white">$${d3.format(",")(a.amount)}</td>
         </tr>`
-    ).join("");
+                    ).join("");
 
-    return `
-        <strong>${d.departmentBroad}</strong><br>
+                    return `
+        <strong>${d.departmentBroad + '-' + d.departmentSpecific}</strong><br>
         Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
         Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
         Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
@@ -631,7 +634,7 @@ tooltip.html(() => {
             </tbody>
         </table>
     `;
-})
+                })
 
 
                     .style("left", (event.pageX + 10) + "px")
