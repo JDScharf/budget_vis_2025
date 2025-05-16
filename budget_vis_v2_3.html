@@ -448,6 +448,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                 .style("opacity", 1);
 
             // Add tooltip functionality
+
             bars.on("mouseover", function (event, d) {
                 d3.select(this).transition()
                     .duration(200)
@@ -461,7 +462,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     <strong>${d.departmentBroad}</strong><br>
                     Proposed Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
                     Amended Budget: $${d3.format(",")(Math.round(d.amendedBudget))}<br>
-                    Cut: ${Math.abs(d.change).toFixed(2)}% ($${d3.format(",")(Math.round(d.absoluteCut))})
+                    Percent Cut: ${Math.abs(d.change).toFixed(2)}% ($${d3.format(",")(Math.round(d.absoluteCut))})
                 `)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
@@ -495,100 +496,109 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
         }
 
         // Chart 2: Absolute Cut Values
-        function createAbsoluteCutChart() {
-            const filteredData = parsedData.filter(d => d.departmentBroad !== "Revenue Changes");
-            const separatedData = [...filteredData].sort((a, b) => b.absoluteCut - a.absoluteCut).slice(0, 15);
 
-            const groupedData = Array.from(
-                d3.rollup(
-                    filteredData,
-                    v => d3.sum(v, d => d.absoluteCut),
-                    d => d.departmentBroad
-                ),
-                ([departmentBroad, totalCut]) => ({ departmentBroad, totalCut })
-            );
+function createAbsoluteCutChart() {
+    const filteredData = parsedData.filter(d => d.departmentBroad !== "Revenue Changes");
 
-            const sortedData = groupedData
-                .sort((a, b) => b.totalCut - a.totalCut)
-                .slice(0, 15);
+    // Group data by departmentBroad and then departmentSpecific
+    const nestedData = d3.groups(filteredData, d => d.departmentBroad, d => d.departmentSpecific)
+        .map(([departmentBroad, deptSpecificGroups]) => {
+            const parts = deptSpecificGroups.map(([departmentSpecific, entries]) => {
+                return {
+                    departmentSpecific,
+                    departmentBroad,
+                    absoluteCut: d3.sum(entries, d => d.absoluteCut),
+                    entries: entries
+                };
+            }).sort((a, b) => b.absoluteCut - a.absoluteCut);
 
+            return {
+                departmentBroad,
+                parts,
+                totalCut: d3.sum(parts, d => d.absoluteCut)
+            };
+        })
+        .sort((a, b) => b.totalCut - a.totalCut)
+        .slice(0, 15); // Top 15 departmentBroad
 
-            const margin = { top: 30, right: 20, bottom: 120, left: 80 };
-            const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
-            const height = 500 - margin.top - margin.bottom;
+    const margin = { top: 30, right: 20, bottom: 120, left: 80 };
+    const width = Math.min(800, window.innerWidth - 40) - margin.left - margin.right;
+    const height = 500 - margin.top - margin.bottom;
 
-            const svg = d3.select("#absolute-cut-chart")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
+    const svg = d3.select("#absolute-cut-chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-            const x = d3.scaleBand()
-                .domain(sortedData.map(d => d.departmentBroad))
-                .range([0, width])
-                .padding(0.2);
+    const x = d3.scaleBand()
+        .domain(nestedData.map(d => d.departmentBroad))
+        .range([0, width])
+        .padding(0.2);
 
-            const y = d3.scaleLinear()
-                .domain([0, -d3.max(sortedData, d => d.totalCut) * 1.1])  // Negative domain
-                .range([0, height]);  // Inverted
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(nestedData, d => d.totalCut) * 1.1])
+        .range([height, 0]); // Inverted
 
-            // X-axis
-            svg.append("g")
-                .attr("transform", `translate(0,0)`)  // X-axis at the top now
-                .call(d3.axisTop(x))
-                .selectAll("text")
+    // X-axis
+    svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x))
+        .selectAll("text")
                 .attr("transform", "rotate(-45)")
-                .style("text-anchor", "start")
-                .style("font-size", "1.5em")
-                .attr("dx", "2em")
-                .attr("dy", "-0.5em")
+                .style("text-anchor", "end")
+        .style("font-size", "1.5em")
+        .attr("dx", "0em")
+        .attr("dy", "0.5em");
 
-            // Y-axis
-            svg.append("g")
-                .call(d3.axisLeft(y)
-                    .tickFormat(d => `$${d3.format(".2s")(d).replace("M", " Million")}`));
+    // Y-axis
+    svg.append("g")
+        .call(d3.axisLeft(y)
+            .tickFormat(d => `$${d3.format(".3s")(d).replace("M", " Million")}`));
 
-            // Bars (inverted: go downward)
-            const bars = svg.selectAll(".bar")
-                .data(sortedData)
-                .enter()
-                .append("rect")
-                .attr("class", "bar")
-                .attr("x", d => x(d.departmentBroad))
+    // Bars with stacking
+    nestedData.forEach(dept => {
+        let yOffset = 0;
+
+        dept.parts.forEach(part => {
+            svg.append("rect")
+                .attr("x", x(dept.departmentBroad))
+                .attr("y", y(yOffset + part.absoluteCut))
                 .attr("width", x.bandwidth())
-                .attr("y", 0)
-                .attr("height", 0)
-                .attr("fill", d => {
-                    if (d.totalCut > 0) return "#F24932";
-                });
+                .attr("height", y(yOffset) - y(yOffset + part.absoluteCut))
+                .attr("fill", "#F24932")
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .append("title")
+                // .text(`${part.departmentBroad} - ${part.departmentSpecific}\nCut: $${d3.format(",")(part.absoluteCut)}`);
 
-            bars.transition()
-                .duration(1000)
-                .delay((d, i) => i * 50)
-                .attr("y", 0)
-                .attr("height", d => y(-d.totalCut));  // Negative for downward growth
+            yOffset += part.absoluteCut;
+        });
+    });
 
-            // Labels
-            svg.selectAll(".label")
-                .data(sortedData)
-                .enter()
-                .append("text")
-                .attr("class", "label")
-                .attr("x", d => x(d.departmentBroad) + x.bandwidth() / 2)
-                .attr("y", d => y(-d.totalCut) + 15)  // Inside the bar
-                .attr("text-anchor", "middle")
-                .style("font-size", "13px")
-                .style("fill", "#F24932")
-                .style("opacity", 0)
-                .text(d => `$${d3.format(".2s")(d.totalCut)}`)
-                .transition()
-                .duration(1000)
-                .delay((d, i) => 1000 + i * 50)
-                .style("opacity", 1);
+    // Labels showing total cut amount at bottom of each bar
+    svg.selectAll(".label")
+        .data(nestedData)
+        .enter()
+        .append("text")
+        .attr("class", "label")
+        .attr("x", d => x(d.departmentBroad) + x.bandwidth() / 2)
+        // .attr("y", d => y(d.totalCut) + 500)
+        .attr("y", d => y(d.totalCut) - 5)
+        .attr("text-anchor", "middle")
+        .style("font-size", "15px")
+        .style("fill", "#F24932")
+        .style("opacity", 0)
+        .text(d => `$${d3.format(".2s")(d.totalCut)}`)
+        .transition()
+        .duration(1000)
+        .delay((d, i) => 1000 + i * 50)
+        .style("opacity", 1);
+        // .text(`${part.departmentBroad} - ${part.departmentSpecific}\nCut: $${d3.format(",")(part.absoluteCut)}`);
 
             // Tooltip (unchanged)
-            bars.on("mouseover", function (event, d) {
+            nestedData.on("mouseover", function (event, d) {
                 d3.select(this).transition()
                     .duration(200)
                     .attr("opacity", 0.8);
@@ -597,27 +607,35 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                     .duration(200)
                     .style("opacity", .9);
 
-                tooltip.html(() => {
-                    const amendments = [];
+        //         tooltip.html(`
+        //     <strong>${d.departmentBroad}</strong><br>
+        //     Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
+        //     Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
+        //     Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
+        //     Areas Cut: ${d.accountAmmend1 + ' ' + d.accountAmmend2}<br>
 
-                    for (let i = 1; i <= 10; i++) {
-                        const acct = d[`accountAmmend${i}`];
-                        const amt = d[`amtChanged${i}`];
+        // `)
+tooltip.html(() => {
+    const amendments = [];
 
-                        if (acct && amt !== 0 && !isNaN(amt)) {
-                            amendments.push({ account: acct, amount: amt });
-                        }
-                    }
+    for (let i = 1; i <= 10; i++) {
+        const acct = d[`accountAmmend${i}`];
+        const amt = d[`amtChanged${i}`];
 
-                    const tableRows = amendments.map(a =>
-                        `<tr>
+        if (acct && amt !== 0 && !isNaN(amt)) {
+            amendments.push({ account: acct, amount: amt });
+        }
+    }
+
+    const tableRows = amendments.map(a =>
+        `<tr>
             <td style="padding: 2px 8px; text-align: left; border: 1px solid white">${a.account}</td>
             <td style="padding: 2px 8px; text-align: right; border: 1px solid white">$${d3.format(",")(a.amount)}</td>
         </tr>`
-                    ).join("");
+    ).join("");
 
-                    return `
-        <strong>${d.departmentBroad + '-' + d.departmentSpecific}</strong><br>
+    return `
+        <strong>${d.departmentBroad}</strong><br>
         Original Budget: $${d3.format(",")(Math.round(d.proposedBudget))}<br>
         Total Cut: $${d3.format(",")(Math.round(d.absoluteCut))}<br>
         Percentage Cut: ${Math.abs(d.change).toFixed(2)}%<br>
@@ -634,7 +652,7 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
             </tbody>
         </table>
     `;
-                })
+})
 
 
                     .style("left", (event.pageX + 10) + "px")
@@ -649,7 +667,8 @@ Syracuse School City District,Syracuse School City District,"612,456,627",Miscel
                         .duration(500)
                         .style("opacity", 0);
                 });
-        }
+
+}
 
         // Chart 3: Before vs After Budget
         function createBeforeAfterChart() {
